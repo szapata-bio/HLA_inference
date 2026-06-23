@@ -1,0 +1,20 @@
+# Data files — never commit, may contain real HLA genotypes
+*.xlsx
+*.csv
+*.tsv
+*.tsv.gz
+*.csv.gz
+data/
+results/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
