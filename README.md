@@ -23,18 +23,24 @@ This made it possible to validate HLA inference against real ground truth for th
 
 ## Approach
 
-**Step 1 — Blind inference (no HLA used as input).**
-HLAGuessr and THNet were run independently on the ENA/MiXCR-processed repertoire exactly as for any cohort without known HLA — using only TCR sequence features. This blind inference was performed before HLA ground truth was available.
+**Step 1 — Inference (no HLA used as input at run time).**
+HLAGuessr and THNet were run independently on the ENA/MiXCR-processed repertoire, using only TCR sequence features. This was performed before HLA ground truth was obtained for this project.
+
+**Important caveat on HLAGuessr**: Rosati et al.'s cohort was one of three datasets (alongside Russell et al. and Emerson et al.) used in the original training of HLAGuessr's classifier (Ruiz Ortega et al. 2025), with HLA genotypes obtained directly from the authors for that purpose. This means HLAGuessr's predictions on this cohort are **not fully blind** — the model had prior exposure to (a subset of) these patients' true HLA during training. High accuracy here was therefore *expected by design*, and this step served to confirm that expectation once ground truth became available to us. **THNet, by contrast, was trained on an entirely independent set of 4,144 donors (Pan et al. 2025) and never saw this cohort** — its validation below is genuinely blind and is the more informative result for assessing real-world inference accuracy on new repertoires.
 
 **Step 2 — Validation against ground truth.**
-Once Dr. Elisa Rosati shared the HIBAG-imputed HLA genotypes, each method's blind predictions were compared independently against real HLA to measure accuracy. **HLA ground truth values themselves are not published in this repository** — only aggregate validation metrics are reported, in agreement with the data sharing terms.
+Once Dr. Elisa Rosati shared the HIBAG-imputed HLA genotypes, each method's predictions were compared independently against real HLA to measure accuracy. **HLA ground truth values themselves are not published in this repository** — only aggregate validation metrics are reported, in agreement with the data sharing terms.
 
 ## Repository structure
-01_rosati_master_table_construction.ipynb   # Unpack RDS, build ground-truth master table
+rosati_hlaguessr.ipynb                      # MiXCR processing + HLAGuessr inference
 
-02_rosati_qc_hla_validation.ipynb           # QC filtering + validation vs HIBAG ground truth
+rosati_thnet_inference.ipynb                # THNet inference + method comparison
 
-Both notebooks are shared without cell outputs, since intermediate outputs would partially expose individual patient HLA genotypes.
+rosati_master_table_construction.ipynb      # Unpack RDS, build ground-truth master table
+
+rosati_qc_hla_validation.ipynb              # QC filtering + validation vs HIBAG ground truth
+
+The two validation notebooks are shared without cell outputs, since intermediate outputs would partially expose individual patient HLA genotypes.
 
 ## Results
 
@@ -42,22 +48,26 @@ Both notebooks are shared without cell outputs, since intermediate outputs would
 
 A productive-CDR3 filter (`C...F/W`) and CDR1/CDR2-availability filter were applied to the 19,820,069 raw clonotypes shared by Elisa Rosati. Only **1.02% were removed**; all 192 patients retained ≥1,300 clones per chain, well above standard depth thresholds.
 
-### Validating blind inference against real HLA
+### Validating inference against real HLA
 
 Predictions from each method (independently, ≥90% confidence threshold) were compared against the HIBAG genotypes, restricted to HLAGuessr's 94 modelable alleles:
 
-| Metric | HLAGuessr ≥90% | THNet ≥90% |
+| Metric | HLAGuessr ≥90% (semi-informed*) | THNet ≥90% (genuinely blind) |
 |---|---|---|
 | Patients validated | 175 | 178 |
 | Predictions made | 1,214 | 1,024 |
 | True positives | 1,188 | 1,009 |
 | False positives | 26 | 15 |
 | Precision (PPV) | 97.9% | 98.5% |
-| Sensitivity | **56.3%** | 47.1% |
+| Sensitivity | 56.3% | 47.1% |
 
-**Key finding**: both methods independently achieve strong, comparable precision (~98%) when confident. HLAGuessr detects a somewhat larger fraction of true HLA alleles (56.3% vs 47.1% sensitivity), while THNet is marginally more precise. Both substantially outperform a strict dual-method consensus requirement (which we tested separately and found overly conservative — see `02_rosati_qc_hla_validation.ipynb`), confirming that requiring agreement between independent methods discards valid signal without meaningfully improving precision.
+*\*Rosati was part of HLAGuessr's training data — see caveat above.*
 
-56% sensitivity at 98% precision is a strong result for *blind* TCR-based inference, where the model never observes HLA labels and must rely entirely on public-clonotype signal — this is not directly comparable to >90% benchmarks from direct molecular HLA typing (NGS/SSO), which sequences genomic DNA rather than inferring genotype from immune repertoire signal.
+**Key finding**: THNet's result is the more meaningful benchmark for real-world performance, since it had no prior exposure to this cohort. **47.1% sensitivity at 98.5% precision on a genuinely unseen cohort is a strong result** for blind TCR-based inference, where the model relies entirely on public-clonotype signal learned from other datasets. HLAGuessr's higher sensitivity (56.3%) is consistent with — and partly explained by — its prior training exposure to this cohort, so the comparison between the two numbers should not be read as "HLAGuessr is simply the better method."
+
+Separately, we tested requiring agreement between both methods (consensus ≥90% on both) and found this **substantially worse** than either method alone (sensitivity 8.1%, vs. 56.3%/47.1% individually) — confirming that requiring cross-method agreement discards valid signal without meaningfully improving the already-high precision (~98%) of either method on its own.
+
+Neither result is comparable to >90% benchmarks from direct molecular HLA typing (NGS/SSO), which sequences genomic DNA rather than inferring genotype from immune repertoire signal.
 
 ### Known artefacts
 
@@ -75,7 +85,7 @@ pip install hlaguessr thnet pandas numpy scikit-learn openpyxl
 
 If you use this pipeline, please cite:
 
-- Ortega et al. 2025 — HLAGuessr: *PLOS Computational Biology*, DOI: 10.1371/journal.pcbi.1012724
+- Ruiz Ortega et al. 2025 — HLAGuessr: *PLOS Computational Biology*, DOI: 10.1371/journal.pcbi.1012724
 - Pan et al. 2025 — THNet: github.com/Mia-yao/THNet
 - Rosati et al. 2022 — dataset: *Gut*, DOI: 10.1136/gutjnl-2021-325373, ENA: PRJEB50045
 
