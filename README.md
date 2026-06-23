@@ -32,15 +32,19 @@ HLAGuessr and THNet were run independently on the ENA/MiXCR-processed repertoire
 Once Dr. Elisa Rosati shared the HIBAG-imputed HLA genotypes, each method's predictions were compared independently against real HLA to measure accuracy. **HLA ground truth values themselves are not published in this repository** — only aggregate validation metrics are reported, in agreement with the data sharing terms.
 
 ## Repository structure
-rosati_hlaguessr.ipynb                      # MiXCR processing + HLAGuessr inference
+notebooks/
 
-rosati_thnet_inference.ipynb                # THNet inference + method comparison
+01_rosati_hlaguessr_inference.ipynb       # MiXCR processing + HLAGuessr inference
 
-rosati_master_table_construction.ipynb      # Unpack RDS, build ground-truth master table
+02_rosati_thnet_inference.ipynb           # THNet inference + method comparison
 
-rosati_qc_hla_validation.ipynb              # QC filtering + validation vs HIBAG ground truth
+03_rosati_master_table_construction.ipynb # Unpack RDS, build ground-truth master table
 
-The two validation notebooks are shared without cell outputs, since intermediate outputs would partially expose individual patient HLA genotypes.
+04_rosati_qc_hla_validation.ipynb         # QC filtering + validation vs HIBAG ground truth
+
+scripts/
+
+unpack_rosati_rds.R                       # R script: RDS -> per-patient, per-chain TSVs
 
 ## Results
 
