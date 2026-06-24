@@ -8,7 +8,7 @@ Rosati et al. 2022 (*Gut*, ENA: PRJEB50045) published bulk TCRαβ repertoires f
 
 **Note on nomenclature**: "CD" refers to Crohn's Disease, not Celiac Disease.
 
-The publicly available ENA data does not include HLA genotypes. The author of this repository contacted the corresponding author, **Elisa Rosati**, who shared:
+The publicly available ENA data does not include HLA genotypes. Dr. Elisa Rosati, the corresponding author, was contacted directly and shared:
 
 - TCRα and TCRβ repertoires (RDS format) for three groups: CD, Healthy, and UC (labelled "colitis" in the source files)
 - HIBAG-imputed HLA genotypes (SNP-array based) — only for CD and Healthy patients
@@ -23,7 +23,7 @@ HLA genotypes were provided only for the CD and Healthy groups: 192 patients tot
 
 The shared TCR data was confirmed to correspond to the same sequencing runs as the public ENA dataset, by cross-referencing patient IDs and checking clonotype overlap — 16 to 20 out of 20 top clonotypes matched per patient checked.
 
-One subtlety surfaced partway through validation: Elisa's HLA file actually has 194 genotyped patients, not 192. Two of them — one CD, one Healthy — have HLA genotypes but no corresponding TCR in her RDS files; their TCR only exists in the public ENA data. These two were excluded from every analysis below, to keep TCR and HLA coming from the same source consistently. All results here are based on exactly 192 patients.
+One subtlety surfaced partway through validation: Dr. Elisa's HLA file actually has 194 genotyped patients, not 192. Two of them — one CD, one Healthy — have HLA genotypes but no corresponding TCR in her RDS files; their TCR only exists in the public ENA data. These two were excluded from every analysis below, to keep TCR and HLA coming from the same source consistently. All results here are based on exactly 192 patients.
 
 ## Approach
 
@@ -31,13 +31,13 @@ HLAGuessr and THNet were run independently on the ENA/MiXCR-processed repertoire
 
 **Important caveat on HLAGuessr**: Rosati's cohort was one of three datasets used in HLAGuessr's own training (alongside Russell et al. and Emerson et al.), with HLA genotypes obtained directly from the authors for that purpose. So HLAGuessr's predictions on this cohort are not fully blind — the model had prior exposure to a subset of these patients' true HLA. THNet, by contrast, was trained on a completely separate set of 4,144 donors and never saw this cohort. Its validation here is genuinely blind and is the more honest test of real-world performance.
 
-Once Elisa shared the HIBAG genotypes, each method's predictions were compared independently against the real HLA.
+Once Dr. Elisa shared the HIBAG genotypes, each method's predictions were compared independently against the real HLA.
 
 No HLA ground truth, per-patient predictions, or per-patient validation outputs are published in this repository. Notebooks are shared without cell outputs, and only aggregate metrics are reported below.
 
 ## Repository structure
 
-The repository has four notebooks under `notebooks/`. The first two cover MiXCR processing and inference with HLAGuessr and THNet respectively. The third unpacks Elisa's RDS files and builds the ground-truth master table. The fourth applies quality control and runs the validation described in this README. A `figures/` subfolder holds three aggregate plots — none of them expose any individual patient's HLA. A `scripts/` folder has the R script used to unpack the RDS files correctly.
+The repository has four notebooks under `notebooks/`. The first two cover MiXCR processing and inference with HLAGuessr and THNet respectively. The third unpacks Dr. Elisa's RDS files and builds the ground-truth master table. The fourth applies quality control and runs the validation described in this README. A `figures/` subfolder holds three aggregate plots — none of them expose any individual patient's HLA. A `scripts/` folder has the R script used to unpack the RDS files correctly.
 
 ## Results
 
@@ -59,6 +59,19 @@ Five outcome categories per locus were defined:
 
 THNet was checked on two different allele scopes: HLAGuessr's 94 modelable alleles, for a fair side-by-side comparison, and THNet's own native 207-allele scope. The larger 207-allele scope gives THNet more candidate alleles to choose from, which means more room for false positives — informative on its own, but not directly comparable to HLAGuessr's 94.
 
+**Overall allele-level metrics (≥90% confidence threshold)** — every individual allele call across the cohort, regardless of locus:
+
+| Metric | HLAGuessr (semi-informed*) | THNet (genuinely blind) |
+|---|---|---|
+| True positives | 1,188 | 1,009 |
+| False positives | 26 | 15 |
+| False negatives | 1,136 | 1,315 |
+| Precision (PPV) | 97.9% | 98.5% |
+| Sensitivity | 51.1% | 43.4% |
+| **F1-score** | **67.2%** | **60.3%** |
+
+Precision is excellent for both methods at this threshold, but over half of true alleles are missed when judged one at a time — expected for blind TCR-based inference, and not comparable to >90% benchmarks from direct molecular HLA typing (NGS/SSO), which sequences genomic DNA rather than inferring genotype from immune repertoire signal.
+
 **% of patients with a fully correct genotype, by locus:**
 
 | HLA Class | Locus | Alleles | HLAGuessr (semi-informed*) | THNet, 94 alleles (genuinely blind) |
@@ -72,6 +85,25 @@ THNet was checked on two different allele scopes: HLAGuessr's 94 modelable allel
 | Class II | DPB1 |  9 | 29.2% | 47.4% |
 
 *\*Rosati was part of HLAGuessr's training data — see caveat above.*
+
+**Full breakdown across all five outcome categories, by locus and method:**
+
+| Method | Locus | Full | Partial | Partial True | None | False Positive |
+|---|---|---|---|---|---|---|
+| HLAGuessr | A    | 47.9% | 22.9% | 0.0% | 27.6% | 1.6% |
+| HLAGuessr | B    | 45.5% | 20.5% | 0.0% | 33.0% | 1.1% |
+| HLAGuessr | C    | 30.3% | 28.2% | 1.1% | 38.8% | 1.6% |
+| HLAGuessr | DRB1 | 50.5% | 15.8% | 0.0% | 33.7% | 0.0% |
+| HLAGuessr | DQB1 | 44.3% | 18.2% | 0.0% | 37.0% | 0.5% |
+| HLAGuessr | DQA1 | 41.1% | 20.8% | 0.0% | 37.5% | 0.5% |
+| HLAGuessr | DPB1 | 29.2% | 19.8% | 0.0% | 50.5% | 0.5% |
+| THNet | A    | 47.4% | 26.0% | 4.2% | 21.4% | 1.0% |
+| THNet | B    | 56.8% | 20.5% | 0.6% | 19.9% | 2.3% |
+| THNet | C    | 43.6% | 23.4% | 2.7% | 28.7% | 1.6% |
+| THNet | DRB1 | **72.6%** | 18.4% | 0.5% | 7.9% | 0.5% |
+| THNet | DQB1 | 54.7% | 27.1% | 2.1% | 15.1% | 1.0% |
+| THNet | DQA1 | 53.6% | 25.0% | 0.5% | 20.3% | 0.5% |
+| THNet | DPB1 | 47.4% | 20.8% | 1.6% | 29.2% | 1.0% |
 
 ![10 random patients — HLAGuessr](notebooks/figures/rosati_hlaguessr_final_random10.png)
 ![Same 10 patients — THNet](notebooks/figures/rosati_thnet_final_random10.png)
