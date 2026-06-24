@@ -8,7 +8,7 @@ Validation of two independent HLA inference methods (HLAGuessr, THNet) against r
 
 **Note on nomenclature**: "CD" refers to Crohn's Disease, not Celiac Disease.
 
-The publicly available ENA data does not include HLA genotypes. We contacted the corresponding author, **Elisa Rosati**, who shared:
+The publicly available ENA data does not include HLA genotypes. We contacted the corresponding author, **Dr. Elisa Rosati**, who shared:
 
 - TCRα and TCRβ repertoires (RDS format) for three groups: CD, Healthy, and UC (labelled "colitis" in the source files)
 - HIBAG-imputed HLA genotypes (SNP-array based) — **only for CD and Healthy patients**
@@ -17,7 +17,7 @@ This made it possible to validate HLA inference against real ground truth for th
 
 ## What we found in the shared data
 
-- The shared RDS files store TRA and TRB as **separate per-patient tables**, each named with the patient ID (e.g. `1.CD.3.Blood.bulk`). A naive unpacking step overwrites the alpha-chain file with the beta-chain file if both chains share the same output filename — this was identified and corrected by writing chain-specific filenames (`_TRA.tsv` / `_TRB.tsv`), see `scripts/unpack_rosati_rds.R`.
+- The shared RDS files store TRA and TRB as **separate per-patient tables**, each named with the patient ID (e.g. `1.CD.3.Blood.bulk`). A naive unpacking step overwrites the alpha-chain file with the beta-chain file if both chains share the same output filename — this was identified and corrected by writing chain-specific filenames (`_TRA.tsv` / `_TRB.tsv`), see `see notebook 03`.
 - HLA genotypes were provided only for the CD and Healthy groups (192 patients total: 98 CD + 94 Healthy). The UC ("colitis") group has TCR data but no HLA ground truth.
 - We confirmed the shared TCR data corresponds to the same sequencing runs as the publicly available ENA dataset (PRJEB50045) by cross-referencing patient IDs and verifying clonotype overlap (16–20/20 top clonotypes matched per patient checked).
 
