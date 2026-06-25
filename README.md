@@ -17,13 +17,11 @@ This made it possible to validate HLA inference against real ground truth for th
 
 ## What was found in the shared data
 
-The shared RDS files store TRA and TRB as separate per-patient tables, each named with the patient ID (e.g. `1.CD.3.Blood.bulk`). A naive unpacking step overwrites the alpha-chain file with the beta-chain file if both chains share the same output filename — this was caught and corrected by writing chain-specific filenames.
+The shared RDS files store TRA and TRB separately per patient. A naive unpacking step overwrote the alpha-chain file with the beta-chain file when both shared the same output name — caught and fixed by using chain-specific filenames.
 
-HLA genotypes were provided only for the CD and Healthy groups: 192 patients total, 98 CD and 94 Healthy. The UC ("colitis") group has TCR data but no HLA ground truth.
+HLA genotypes were provided only for CD and Healthy patients (192 total: 98 CD, 94 Healthy); the UC group has TCR but no HLA. The shared TCR data was confirmed to match the public ENA dataset by clonotype overlap (16–20/20 top clonotypes per patient checked).
 
-The shared TCR data was confirmed to correspond to the same sequencing runs as the public ENA dataset, by cross-referencing patient IDs and checking clonotype overlap — 16 to 20 out of 20 top clonotypes matched per patient checked.
-
-One subtlety surfaced partway through validation: Dr. Elisa's HLA file actually has 194 genotyped patients, not 192. Two of them — one CD, one Healthy — have HLA genotypes but no corresponding TCR in her RDS files; their TCR only exists in the public ENA data. These two were excluded from every analysis below, to keep TCR and HLA coming from the same source consistently. All results here are based on exactly 192 patients.
+One subtlety: Dr. Elisa's HLA file actually has 194 genotyped patients, not 192 — two of them have no matching TCR in her RDS files (their TCR exists only in public ENA data). These two are excluded throughout, so every result here is based on exactly 192 patients.
 
 ## Approach
 
@@ -59,18 +57,21 @@ Five outcome categories per locus were defined:
 
 THNet was checked on two different allele scopes: HLAGuessr's 94 modelable alleles, for a fair side-by-side comparison, and THNet's own native 207-allele scope. The larger 207-allele scope gives THNet more candidate alleles to choose from, which means more room for false positives — informative on its own, but not directly comparable to HLAGuessr's 94.
 
-**Overall allele-level metrics (≥90% confidence threshold)** — every individual allele call across the cohort, regardless of locus:
+**Overall allele-level metrics (≥90% confidence threshold)**
+
+Across the 192 patients, there are 2,300 real allele instances in total (restricted to HLAGuessr's 94 modelable alleles). For each one, a method either flags it correctly with ≥90% confidence (a true positive), or fails to reach that confidence even though the allele is real (a false negative) — these two numbers always add up to 2,300. Separately, each method occasionally flags an allele the patient doesn't actually have (a false positive), which is rare for both methods.
 
 | Metric | HLAGuessr (semi-informed*) | THNet (genuinely blind) |
 |---|---|---|
-| True positives | 1,188 | 1,009 |
-| False positives | 26 | 15 |
-| False negatives | 1,136 | 1,315 |
+| Real alleles (total) | 2,300 | 2,300 |
+| True positives | 1,178 | 997 |
+| False negatives | 1,122 | 1,303 |
+| False positives | 25 | 15 |
 | Precision (PPV) | 97.9% | 98.5% |
-| Sensitivity | 51.1% | 43.4% |
-| **F1-score** | **67.2%** | **60.3%** |
+| Sensitivity | 51.2% | 43.3% |
+| **F1-score** | **67.3%** | **60.2%** |
 
-Precision is excellent for both methods at this threshold, but over half of true alleles are missed when judged one at a time — expected for blind TCR-based inference, and not comparable to >90% benchmarks from direct molecular HLA typing (NGS/SSO), which sequences genomic DNA rather than inferring genotype from immune repertoire signal.
+In plain terms: of every 100 real alleles a patient carries, HLAGuessr correctly flags about 51 of them with high confidence, and THNet about 43 — the rest simply don't reach the 90% confidence threshold, which is not the same as being actively called "wrong". When either method does flag something positive, it is right almost every time (97.9–98.5% precision) — false positives are rare (25 and 15 cases respectively, out of well over 2,300 opportunities).
 
 **% of patients with a fully correct genotype, by locus:**
 
@@ -109,7 +110,9 @@ Precision is excellent for both methods at this threshold, but over half of true
 ![Same 10 patients — THNet](notebooks/figures/rosati_thnet_final_random10.png)
 ![Genotype capture outcome by locus, both methods](notebooks/figures/rosati_insights_summary_final.png)
 
-THNet outperforms HLAGuessr at every single locus. This is notable precisely because the comparison is biased in favour of HLAGuessr, which had prior training exposure to this cohort, while THNet had none. DRB1 remains the strongest locus for both methods; DPB1 and C remain the weakest. "Partial True" — a real allele displaced by a higher-scoring false positive — is rare for both methods (0% for HLAGuessr, 0.5–4.2% for THNet); the dominant failure mode is simple omission, not active confusion between alleles.
+The two methods disagree depending on which metric is used. THNet achieves a higher full-genotype capture rate at every single locus — notable because the comparison favours HLAGuessr, which had prior training exposure to this cohort, while THNet had none. At the individual-allele level, however, HLAGuessr shows higher sensitivity overall (51.2% vs 43.3%), meaning it correctly flags more individual alleles in total; THNet is comparatively better at completing *both* alleles together for the same patient, even though it catches fewer alleles overall. The two metrics are measuring different things — one rewards any correct allele call, the other only rewards a fully completed genotype — and neither method "wins" cleanly across both.
+
+DRB1 remains the strongest locus for both methods; DPB1 and C remain the weakest. "Partial True" — a real allele displaced by a higher-scoring false positive — is rare for both methods (0% for HLAGuessr, 0.5–4.2% for THNet); the dominant failure mode for both is simple omission (a real allele never reaching the confidence threshold), not active confusion between alleles.
 
 A consensus approach was also tested, requiring agreement between both methods at high confidence, and it performed substantially worse than either method alone — requiring cross-method agreement discards valid signal without meaningfully improving precision.
 
