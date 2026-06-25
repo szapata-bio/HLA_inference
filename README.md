@@ -41,7 +41,7 @@ The repository has four notebooks under `notebooks/`. The first two cover MiXCR 
 
 ### Quality control
 
-A productive-CDR3 filter (must start with C, end in F or W) and a requirement that CDR1/CDR2 be resolvable from the V-gene dictionary were applied. Only 1.02% of the 19,820,069 raw clonotypes were removed — Elisa's repertoires were already clean. All 192 patients kept at least 1,300 clones per chain, well above the 1,000-clone threshold used elsewhere in this project.
+A productive-CDR3 filter (must start with C, end in F or W) and a requirement that CDR1/CDR2 be resolvable from the V-gene dictionary were applied. Only 1.02% of the 19,820,069 raw clonotypes were removed — Rosati's repertoires were already clean. All 192 patients kept at least 1,300 clones per chain, well above the 1,000-clone threshold used elsewhere in this project.
 
 ### Validating inference against real HLA
 
@@ -49,12 +49,12 @@ Each method's predictions were compared against the HIBAG genotypes for the 192 
 
 Five outcome categories per locus were defined:
 
-- **Full**: both real alleles are among the top-ranked positives — genotype fully and correctly captured.
-- **Partial**: one real allele captured, the other simply never predicted positive — a straightforward miss.
-- **Partial True**: one real allele captured, but the other real allele *was* predicted positive, just outranked by a higher-scoring false positive.
-- **None**: neither real allele predicted positive.
-- **False Positive**: no real allele captured, but the method raised one or more wrong positive calls anyway.
-
+- **Full**: both real alleles correctly captured.
+- **Partial**: one real allele captured, the other simply missed.
+- **Partial True**: one real allele captured, the other was predicted but outranked by a false positive.
+- **None**: neither real allele captured.
+- **False Positive**: no real allele captured, but the method raised one or more wrong calls.
+- 
 THNet was checked on two different allele scopes: HLAGuessr's 94 modelable alleles, for a fair side-by-side comparison, and THNet's own native 207-allele scope. The larger 207-allele scope gives THNet more candidate alleles to choose from, which means more room for false positives — informative on its own, but not directly comparable to HLAGuessr's 94.
 
 **Overall allele-level metrics (≥90% confidence threshold)**
@@ -110,13 +110,11 @@ In plain terms: of every 100 real alleles a patient carries, HLAGuessr correctly
 ![Same 10 patients — THNet](notebooks/figures/rosati_thnet_final_random10.png)
 ![Genotype capture outcome by locus, both methods](notebooks/figures/rosati_insights_summary_final.png)
 
-The two methods disagree depending on which metric is used. THNet achieves a higher full-genotype capture rate at every single locus — notable because the comparison favours HLAGuessr, which had prior training exposure to this cohort, while THNet had none. At the individual-allele level, however, HLAGuessr shows higher sensitivity overall (51.2% vs 43.3%), meaning it correctly flags more individual alleles in total; THNet is comparatively better at completing *both* alleles together for the same patient, even though it catches fewer alleles overall. The two metrics are measuring different things — one rewards any correct allele call, the other only rewards a fully completed genotype — and neither method "wins" cleanly across both.
+The two methods disagree depending on the metric. THNet achieves a higher full-genotype capture rate at every locus, despite HLAGuessr's training advantage on this cohort. At the individual-allele level, HLAGuessr shows higher sensitivity (51.2% vs 43.3%), catching more alleles overall; THNet is more consistent at completing both alleles together per patient. Neither method wins cleanly across both metrics.
 
-DRB1 remains the strongest locus for both methods; DPB1 and C remain the weakest. "Partial True" — a real allele displaced by a higher-scoring false positive — is rare for both methods (0% for HLAGuessr, 0.5–4.2% for THNet); the dominant failure mode for both is simple omission (a real allele never reaching the confidence threshold), not active confusion between alleles.
+DRB1 is the strongest locus for both; DPB1 and C are the weakest. The dominant failure mode for both methods is simple omission — a real allele not reaching the confidence threshold — not active confusion between alleles.
 
-A consensus approach was also tested, requiring agreement between both methods at high confidence, and it performed substantially worse than either method alone — requiring cross-method agreement discards valid signal without meaningfully improving precision.
-
-None of these results are comparable to the >90% benchmarks reported for direct molecular HLA typing (NGS/SSO), which sequences genomic DNA rather than inferring genotype from immune repertoire signal.
+A consensus approach (requiring agreement between both methods) performed worse than either alone, and is not used. None of these results are comparable to >90% benchmarks from direct molecular HLA typing (NGS/SSO).
 
 ### Known artefacts
 
