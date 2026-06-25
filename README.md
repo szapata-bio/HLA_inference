@@ -54,7 +54,7 @@ Five outcome categories per locus were defined:
 - **Partial True**: one real allele captured, the other was predicted but outranked by a false positive.
 - **None**: neither real allele captured.
 - **False Positive**: no real allele captured, but the method raised one or more wrong calls.
-- 
+  
 THNet was checked on two different allele scopes: HLAGuessr's 94 modelable alleles, for a fair side-by-side comparison, and THNet's own native 207-allele scope. The larger 207-allele scope gives THNet more candidate alleles to choose from, which means more room for false positives — informative on its own, but not directly comparable to HLAGuessr's 94.
 
 **Overall allele-level metrics (≥90% confidence threshold)**
